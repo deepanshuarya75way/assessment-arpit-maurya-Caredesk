@@ -1,0 +1,7 @@
+fastapi>=0.110
+uvicorn>=0.29
+python-multipart>=0.0.9
+requests>=2.31
+pytesseract>=0.3.10
+pillow>=10.0
+pypdf>=4.0

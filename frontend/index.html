@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CareDesk – Healthcare Automation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f7f6;--panel:#fff;--ink:#14302e;--mute:#5d716f;--line:#dbe4e2;--brand:#0f766e;--brand-d:#0b5a54;--side:#12302e;--bad:#b42318;--ok:#067647;--warn:#b54708}
+@media(prefers-color-scheme:dark){:root{--bg:#0e1a19;--panel:#152624;--ink:#e6f0ee;--mute:#93a9a6;--line:#264240;--brand:#2dd4bf;--brand-d:#5eead4;--side:#0a1413;--bad:#f97066;--ok:#47cd89;--warn:#fdb022}}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.5 Figtree,system-ui,sans-serif;background:var(--bg);color:var(--ink);display:flex;min-height:100vh}
+nav{width:230px;background:var(--side);color:#e6f0ee;padding:22px 14px;position:sticky;top:0;height:100vh;flex-shrink:0}
+nav h1{font-size:20px;margin:0 8px 22px;letter-spacing:.2px}
+nav button{display:block;width:100%;text-align:left;background:none;border:0;color:#b7cbc8;padding:10px 12px;border-radius:8px;font:inherit;cursor:pointer;margin-bottom:2px}
+nav button:hover{background:#ffffff14}
+nav button.on{background:#0f766e;color:#fff;font-weight:700}
+main{flex:1;padding:28px;max-width:1100px;min-width:0}
+h2{margin:0 0 4px;font-size:26px}
+.sub{color:var(--mute);margin:0 0 20px}
+section{display:none}section.on{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:18px}
+.card h3{margin:0 0 12px;font-size:16px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:18px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+.stat b{display:block;font-size:34px;line-height:1.1;color:var(--brand)}
+.stat span{color:var(--mute)}
+form,.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+label{display:flex;flex-direction:column;gap:4px;font-weight:500;font-size:13px;color:var(--mute)}
+input,select,textarea{font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:100%}
+textarea{min-height:110px;resize:vertical}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.full{grid-column:1/-1}
+.btn{background:var(--brand);color:#fff;border:0;border-radius:8px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer}
+.dark .btn,.btn:hover{background:var(--brand-d)}
+.btn.ghost{background:none;color:var(--brand);border:1px solid var(--brand)}
+.btn.sm{padding:5px 10px;font-size:13px;background:none;color:var(--bad);border:1px solid var(--bad)}
+.btn:disabled{opacity:.55;cursor:wait}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--mute);font-weight:500}
+.empty{color:var(--mute);padding:14px 0}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700;border:1px solid var(--line)}
+.pill.ok{color:var(--ok);border-color:var(--ok)}.pill.bad{color:var(--bad);border-color:var(--bad)}.pill.warn{color:var(--warn);border-color:var(--warn)}
+.out{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:14px;margin-top:14px;display:none}
+.note{font-size:13px;color:var(--mute);margin-top:10px}
+#toast{position:fixed;right:18px;bottom:18px;background:var(--ink);color:var(--bg);padding:11px 16px;border-radius:8px;display:none;max-width:340px;z-index:9}
+#toast.err{background:var(--bad);color:#fff}
+@media(max-width:760px){body{flex-direction:column}nav{width:100%;height:auto;position:static;display:flex;overflow-x:auto;padding:10px}nav h1{display:none}nav button{width:auto;white-space:nowrap}main{padding:16px}}
+#login{position:fixed;inset:0;background:var(--bg);display:none;place-items:center;z-index:20}#login form{display:flex;flex-direction:column;width:min(340px,90vw);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:26px}#login h2{margin-bottom:14px}</style>
+</head>
+<body>
+<div id="login"><form id="lform"><h2>CareDesk login</h2>
+<label>Username<input name="username" required autocomplete="username"></label>
+<label style="margin-top:10px">Password<input name="password" type="password" required autocomplete="current-password"></label>
+<p class="note" id="lerr" style="color:var(--bad);min-height:1em"></p><button class="btn" id="lbtn">Log in</button>
+<p class="note" style="margin-top:12px;text-align:center"><span id="ltxt">New user?</span> <a href="#" id="ltoggle" style="color:var(--acc,#6cb6ff)">Sign up</a></p></form></div>
+<nav aria-label="Main">
+  <h1>CareDesk</h1>
+  <button data-s="dash" class="on">Dashboard</button>
+  <button data-s="pat">Patients</button>
+  <button data-s="apt">Appointments</button>
+  <button data-s="sym">Symptom checker</button>
+  <button data-s="doc2">Doctors</button>
+  <button data-s="ask">Health assistant</button>
+  <button data-s="doc">Reports &amp; prescriptions</button>
+  <button data-s="usr" id="usrbtn" style="display:none">Users (admin)</button>
+  <button id="logout" style="margin-top:14px;color:#f0b3ac">Log out</button>
+</nav>
+<main>
+<section id="dash" class="on">
+  <h2>Dashboard</h2><p class="sub">Live numbers from your database.</p>
+  <div class="stats" id="stats"></div>
+  <div class="card"><h3>System status</h3><div id="status">Checking…</div></div>
+  <div class="card"><h3>Change password</h3><form id="pwform"><label>Current password<input name="old_password" type="password" required></label><label>New password (min 6)<input name="new_password" type="password" minlength="6" required></label><div class="full"><button class="btn ghost">Change password</button></div></form></div>
+  <div class="card"><h3>Upcoming appointments</h3><div class="tw" id="upcoming"></div></div>
+</section>
+
+<section id="usr">
+  <h2>Users</h2>
+  <div class="card"><div class="tw" id="ulist"></div></div>
+</section>
+
+<section id="pat">
+  <h2>Patients</h2><p class="sub">Register a patient, then book an appointment for them.</p>
+  <div class="card"><h3>Register patient</h3>
+  <form id="pform">
+    <label>Full name<input name="name" required minlength="2" maxlength="100"></label>
+    <label>Age<input name="age" type="number" min="1" max="120" required></label>
+    <label>Gender<select name="gender"><option>Male</option><option>Female</option><option>Other</option></select></label>
+    <label>Email<input name="email" type="email" required></label>
+    <label>Phone<input name="phone" required pattern="\+?[0-9\s\-]{7,15}" title="7–15 digits, may start with +"></label>
+    <label>Department<select name="department" class="dept"></select></label>
+    <label class="full">Symptoms (optional)<textarea name="symptoms" maxlength="1000" style="min-height:70px"></textarea></label>
+    <div class="full"><button class="btn">Register patient</button></div>
+  </form></div>
+  <div class="card"><h3>All patients</h3><div class="tw" id="plist"></div></div>
+</section>
+
+<section id="apt">
+  <h2>Appointments</h2><p class="sub">Each department can hold one booking per time slot.</p>
+  <div class="card"><h3>Book appointment</h3>
+  <form id="aform">
+    <label>Patient<select name="patient_id" id="psel" required></select></label>
+    <label>Department<select name="department" class="dept"></select></label>
+    <label>Doctor<select name="doctor" id="dsel"></select></label>
+    <label>Date<input name="appointment_date" type="date" required></label>
+    <label>Time<select name="appointment_time" id="tsel"></select></label>
+    <div class="full"><button class="btn">Book appointment</button></div>
+  </form></div>
+  <div class="card"><h3>All appointments</h3><div class="tw" id="alist"></div></div>
+</section>
+
+<section id="doc2">
+  <h2>Doctors</h2><p class="sub">Doctors added here can be chosen when booking appointments.</p>
+  <div class="card"><h3>Add doctor</h3><form id="dform"><label>Name<input name="name" required minlength="2" placeholder="Dr. Verma"></label><label>Department<select name="department" class="dept"></select></label><div class="full"><button class="btn">Add doctor</button></div></form></div>
+  <div class="card"><h3>All doctors</h3><div class="tw" id="dlist"></div></div>
+</section>
+
+<section id="sym">
+  <h2>Symptom checker</h2><p class="sub">Describe what you feel. You get general information, not a diagnosis.</p>
+  <div class="card">
+    <label>Symptoms<textarea id="symtext" placeholder="e.g. fever for 2 days, sore throat, body ache" maxlength="1000"></textarea></label>
+    <p><button class="btn" id="symbtn">Check symptoms</button></p>
+    <div class="out" id="symout"></div>
+  </div>
+</section>
+
+<section id="ask">
+  <h2>Health assistant</h2><p class="sub">Ask a general health question.</p>
+  <div class="card">
+    <label>Your question<textarea id="qtext" placeholder="e.g. How can I lower my blood pressure naturally?" maxlength="1000"></textarea></label>
+    <p><button class="btn" id="qbtn">Ask</button></p>
+    <div class="out" id="qout"></div>
+  </div>
+</section>
+
+<section id="doc">
+  <h2>Reports &amp; prescriptions</h2><p class="sub">Upload a .txt or .pdf report, or a .jpg/.png photo of a prescription. The text is extracted, and you can edit it before it is explained.</p>
+  <div class="card">
+    <div class="row">
+      <label>Report (.txt, .pdf)<input type="file" id="rfile" accept=".txt,.pdf"></label>
+      <label>Prescription image (.jpg, .png)<input type="file" id="ifile" accept=".jpg,.jpeg,.png"></label>
+    </div>
+    <label style="margin-top:12px">Extracted text<textarea id="dtext" style="min-height:180px" placeholder="Extracted text appears here. You can also paste text."></textarea></label>
+    <p><button class="btn" id="sumbtn">Summarize report</button> <button class="btn ghost" id="ocrbtn">Explain prescription</button></p>
+    <div class="out" id="dout"></div>
+    <p class="note">AI output is general information. Always confirm with a qualified doctor.</p>
+  </div>
+</section>
+</main>
+<div id="toast" role="status"></div>
+
+<script>
+let TOKEN=localStorage.getItem("cd_token")||"";
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let tt;function toast(m,err){const t=$("#toast");t.textContent=m;t.className=err?"err":"";t.style.display="block";clearTimeout(tt);tt=setTimeout(()=>t.style.display="none",4500)}
+
+async function api(path,opt={}){
+  let r;opt.headers={...(opt.headers||{}),Authorization:"Bearer "+TOKEN};
+  try{r=await fetch(path,opt)}catch{throw new Error("Cannot reach the server. Is uvicorn running?")}
+  let d=null;try{d=await r.json()}catch{}
+  if(r.status===401&&path!=="/auth/login"){showLogin();throw new Error("Please log in.")}
+  if(!r.ok){
+    let m=d&&d.detail;
+    if(Array.isArray(m))m=m.map(e=>(e.loc||[]).slice(1).join(".")+": "+e.msg).join("; ");
+    throw new Error(m||("Request failed ("+r.status+")"));
+  }
+  return d;
+}
+const post=(p,b,m="POST")=>api(p,{method:m,headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});
+const table=(rows,cols)=>rows.length?`<table><thead><tr>${cols.map(c=>`<th>${c[0]}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td>${c[1](r)}</td>`).join("")}</tr>`).join("")}</tbody></table>`:'<div class="empty">Nothing here yet.</div>';
+
+/* navigation */
+$$("nav button[data-s]").forEach(b=>b.onclick=()=>{
+  $$("nav button[data-s]").forEach(x=>x.classList.toggle("on",x===b));
+  $$("section").forEach(s=>s.classList.toggle("on",s.id===b.dataset.s));
+  refresh(b.dataset.s);
+});
+function refresh(s){({dash:loadDash,pat:loadPatients,apt:loadAppts,doc2:loadDoctors,usr:loadUsers})[s]?.().catch(e=>toast(e.message,1))}
+
+/* dashboard */
+async function loadDash(){
+  const [st,ap,h]=await Promise.all([api("/stats"),api("/appointments"),api("/health")]);
+  $("#stats").innerHTML=[["Patients",st.patients],["Appointments",st.appointments],["Reports summarized",st.reports_processed],["AI questions",st.ai_queries]].map(x=>`<div class="stat"><b>${x[1]}</b><span>${x[0]}</span></div>`).join("");
+  const pill=(ok,t,warn)=>`<span class="pill ${ok?"ok":warn?"warn":"bad"}">${t}</span>`;
+  $("#status").innerHTML=`API ${pill(1,"running")} &nbsp; Ollama ${pill(h.ollama,h.ollama?"connected":"not running")} &nbsp; Model ${esc(h.model_name)} ${pill(h.model,h.model?"ready":"not installed")} &nbsp; Image OCR ${pill(h.ocr,h.ocr?"ready":"Tesseract missing")}`+
+   ((!h.ollama||!h.model)?`<p class="note">AI features need Ollama. Run: <b>ollama serve</b> and <b>ollama pull ${esc(h.model_name)}</b></p>`:"");
+  const today=new Date().toISOString().slice(0,10);
+  $("#upcoming").innerHTML=table(ap.filter(a=>a.status==="Booked"&&a.appointment_date>=today).slice(0,8),apCols(false));
+}
+const apCols=(act)=>[["Patient",a=>esc(a.patient_name)],["Department",a=>esc(a.department)],["Doctor",a=>esc(a.doctor||"—")],["Date",a=>esc(a.appointment_date)],["Time",a=>esc(a.appointment_time)],["Status",a=>`<span class="pill ${a.status==="Booked"?"ok":"warn"}">${esc(a.status)}</span>`]].concat(act?[["",a=>a.status==="Booked"?`<button class="btn sm" data-c="${a.id}">Cancel</button>`:""]]:[]);
+
+/* patients */
+let PT=[],editing=null;
+async function loadPatients(){
+  const p=await api("/patients");
+  $("#plist").innerHTML=table(p,[["ID",r=>r.id],["Name",r=>esc(r.name)],["Age",r=>r.age],["Gender",r=>esc(r.gender)],["Email",r=>esc(r.email)],["Phone",r=>esc(r.phone)],["Department",r=>esc(r.department)],["",r=>`<button class="btn sm" style="color:var(--brand);border-color:var(--brand)" data-e="${r.id}">Edit</button> <button class="btn sm" data-d="${r.id}">Delete</button>`]]);
+  PT=p;$("#psel").innerHTML=p.length?p.map(r=>`<option value="${r.id}">${esc(r.name)} (#${r.id})</option>`).join(""):'<option value="">Register a patient first</option>';
+}
+$("#pform").onsubmit=async e=>{
+  e.preventDefault();const f=Object.fromEntries(new FormData(e.target));f.age=+f.age;
+  try{const r=editing?await post("/patients/"+editing,f,"PUT"):await post("/patients",f);toast(r.message);resetPForm();loadPatients()}catch(x){toast(x.message,1)}
+};
+function resetPForm(){editing=null;$("#pform").reset();$("#pform .btn").textContent="Register patient"}
+$("#plist").onclick=async e=>{
+  const ed=e.target.dataset.e,del=e.target.dataset.d;
+  if(ed){const p=PT.find(x=>x.id==ed),f=$("#pform");for(const k of["name","age","gender","email","phone","department","symptoms"])f[k].value=p[k]??"";editing=ed;$("#pform .btn").textContent="Save changes";scrollTo({top:0,behavior:"smooth"})}
+  if(del&&confirm("Delete this patient and all their appointments?")){try{const r=await api("/patients/"+del,{method:"DELETE"});toast(r.message);if(editing==del)resetPForm();loadPatients()}catch(x){toast(x.message,1)}}
+};
+
+/* doctors */
+let DOCS=[];
+async function loadDoctors(){
+  DOCS=await api("/doctors");
+  $("#dlist").innerHTML=table(DOCS,[["Name",r=>esc(r.name)],["Department",r=>esc(r.department)],["",r=>`<button class="btn sm" data-x="${r.id}">Remove</button>`]]);
+}
+function fillDocs(){
+  const dep=$("#aform [name=department]").value;
+  $("#dsel").innerHTML='<option value="">No preference</option>'+DOCS.filter(d=>d.department===dep).map(d=>`<option>${esc(d.name)}</option>`).join("");
+}
+$("#aform [name=department]").onchange=fillDocs;
+$("#dform").onsubmit=async e=>{e.preventDefault();try{const r=await post("/doctors",Object.fromEntries(new FormData(e.target)));toast(r.message);e.target.reset();loadDoctors()}catch(x){toast(x.message,1)}};
+$("#dlist").onclick=async e=>{const id=e.target.dataset.x;if(!id||!confirm("Remove this doctor?"))return;try{await api("/doctors/"+id,{method:"DELETE"});toast("Doctor removed");loadDoctors()}catch(x){toast(x.message,1)}};
+
+/* appointments */
+async function loadAppts(){
+  await loadPatients();DOCS=await api("/doctors");fillDocs();
+  $("#alist").innerHTML=table(await api("/appointments"),apCols(true));
+}
+$("#alist").onclick=async e=>{
+  const id=e.target.dataset.c;if(!id||!confirm("Cancel this appointment?"))return;
+  try{await api(`/appointments/${id}/cancel`,{method:"PATCH"});toast("Appointment cancelled");loadAppts()}catch(x){toast(x.message,1)}
+};
+$("#aform").onsubmit=async e=>{
+  e.preventDefault();const f=Object.fromEntries(new FormData(e.target));
+  if(!f.patient_id)return toast("Register a patient first.",1);
+  f.patient_id=+f.patient_id;
+  try{const r=await post("/appointments",f);toast(r.message);loadAppts()}catch(x){toast(x.message,1)}
+};
+
+/* AI helpers */
+async function runAI(btn,out,fn,key){
+  const o=$(out);btn.disabled=true;const t=btn.textContent;btn.textContent="Working… (can take a minute)";
+  try{const d=await fn();o.textContent=d[key];o.style.display="block"}catch(x){toast(x.message,1)}
+  btn.disabled=false;btn.textContent=t;
+}
+$("#symbtn").onclick=e=>runAI(e.target,"#symout",()=>post("/ai/symptoms",{symptoms:$("#symtext").value.trim()}),"result");
+$("#qbtn").onclick=e=>runAI(e.target,"#qout",()=>post("/ai/assistant",{question:$("#qtext").value.trim()}),"answer");
+$("#sumbtn").onclick=e=>runAI(e.target,"#dout",()=>post("/ai/summarize",{text:$("#dtext").value}),"summary");
+$("#ocrbtn").onclick=e=>runAI(e.target,"#dout",()=>post("/ai/explain-ocr",{text:$("#dtext").value}),"explanation");
+
+async function upload(input,url){
+  const f=input.files[0];if(!f)return;
+  const fd=new FormData();fd.append("file",f);
+  $("#dtext").value="Extracting text…";
+  try{const d=await api(url,{method:"POST",body:fd});$("#dtext").value=d.text||"";if(!d.text)toast("No text found in this file.",1)}
+  catch(x){$("#dtext").value="";toast(x.message,1)}
+  input.value="";
+}
+$("#rfile").onchange=e=>upload(e.target,"/reports/extract");
+$("#ifile").onchange=e=>upload(e.target,"/ocr/extract");
+
+/* users (admin) */
+async function loadUsers(){const u=await api("/admin/users");$("#ulist").innerHTML=table(u,[["ID",r=>r.id],["Username",r=>esc(r.username)],["Signed up",r=>esc(r.created_at||"")]])}
+
+/* login + signup */
+let signupMode=false;
+$("#ltoggle").onclick=e=>{e.preventDefault();signupMode=!signupMode;
+  $("#lform h2").textContent=signupMode?"CareDesk sign up":"CareDesk login";
+  $("#lbtn").textContent=signupMode?"Create account":"Log in";
+  $("#ltxt").textContent=signupMode?"Already have an account?":"New user?";
+  $("#ltoggle").textContent=signupMode?"Log in":"Sign up";
+  $("#lerr").textContent="";$("#lerr").style.color="var(--bad)"};
+function showLogin(){TOKEN="";localStorage.removeItem("cd_token");$("#login").style.display="grid"}
+$("#lform").onsubmit=async e=>{
+  e.preventDefault();$("#lerr").textContent="";$("#lerr").style.color="var(--bad)";
+  if(signupMode){
+    try{const r=await post("/auth/signup",Object.fromEntries(new FormData(e.target)));e.target.reset();
+      $("#ltoggle").click();$("#lerr").style.color="var(--ok,#5fd38d)";$("#lerr").textContent=r.message}
+    catch(x){$("#lerr").textContent=x.message}
+    return;
+  }
+  try{const d=await post("/auth/login",Object.fromEntries(new FormData(e.target)));TOKEN=d.token;localStorage.setItem("cd_token",TOKEN);e.target.reset();$("#login").style.display="none";start()}
+  catch(x){$("#lerr").textContent=x.message}
+};
+$("#logout").onclick=async()=>{try{await api("/auth/logout",{method:"POST"})}catch{}showLogin()};
+$("#pwform").onsubmit=async e=>{e.preventDefault();try{const r=await post("/auth/password",Object.fromEntries(new FormData(e.target)));toast(r.message);e.target.reset()}catch(x){toast(x.message,1)}};
+
+/* init */
+async function start(){
+  $('nav button[data-s=dash]').click();  // always begin on the dashboard after login
+  try{const me=await api("/auth/me");$("#usrbtn").style.display=me.is_admin?"block":"none"}catch{}
+  try{
+    const d=await api("/departments");
+    $$(".dept").forEach(s=>s.innerHTML=d.map(x=>`<option>${esc(x)}</option>`).join(""));
+  }catch(x){toast(x.message,1)}
+  const slots=[];for(let h=9;h<18;h++)for(const m of["00","30"])slots.push(String(h).padStart(2,"0")+":"+m);
+  $("#tsel").innerHTML=slots.map(s=>`<option>${s}</option>`).join("");
+  $("#aform [name=appointment_date]").min=new Date().toISOString().slice(0,10);
+}
+TOKEN?start():showLogin();
+</script>
+</body>
+</html>
