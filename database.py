@@ -28,29 +28,20 @@ def get_connection():
 def create_tables():
     with get_connection() as conn:
         conn.execute("""
-            CREATE TABLE IF NOT EXISTS patients (
+            CREATE TABLE IF NOT EXISTS conversation (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
                 age INTEGER,
-                gender TEXT,
-                email TEXT NOT NULL,
-                phone TEXT NOT NULL,
-                department TEXT,
-                symptoms TEXT
-            )
+                created at TEXT DEFAULT CUREENT_TIMESTAMP, FOREIGN KEY (user_id)REFERENCES users(id)REFERENCE user(id)
         """)
 
         conn.execute("""
-            CREATE TABLE IF NOT EXISTS appointments (
+            CREATE TABLE IF NOT EXISTS chat_messages (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                patient_id INTEGER NOT NULL,
-                patient_name TEXT NOT NULL,
-                email TEXT NOT NULL,
-                department TEXT NOT NULL,
-                doctor TEXT,
-                appointment_date TEXT NOT NULL,
-                appointment_time TEXT NOT NULL,
-                status TEXT DEFAULT 'Booked',
+                conversation_id INTEGER NOT NULL,
+                role text NOT NULL,
+                content TEXT NOT NULL,
+                created_at TEXT DEAFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (patient_id) REFERENCES patients (id)
             )
         """)
@@ -93,16 +84,27 @@ def create_tables():
 
 # ---------- patients ----------
 
-def add_patient(name, age, gender, email, phone, department, symptoms):
+def create_conversation(user_id):
     with get_connection() as conn:
-        cursor = conn.execute(
-            """
-            INSERT INTO patients (name, age, gender, email, phone, department, symptoms)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (name, age, gender, email, phone, department, symptoms),
-        )
-        return cursor.lastrowid
+        return conn.execute(
+            "SELECT*FROM conversation WHERE id =?",(connection_id,)
+        ).fetchone
+        return dic(row) if row else None
+        def add_message(conversation_id, role,content):
+            with get_connection()as conn:
+                conn.execute(
+                    "INSERT INTO chat_message(converation_id, role, content) VALUE(?,?,?)",
+                    (conversation_id, role, content),
+                )
+                 def get_messages(conversation_id, limit=20):        
+            with get_connection()as conn:
+                rows= conn.execute()as conn:
+                rows= conn.excute(
+                    """SELECT role, content FROM chats_message WHERE conversation_id=?
+                    ORDER BY ID DESC LIMIT?""
+                (convseration_id ,limit),
+                ). fetchall()
+                return[dict(r)for r in rows][::-1]
 
 
 def get_patients():

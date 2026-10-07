@@ -1,5 +1,7 @@
+from cmd import PROMPT
 import os
 from io import BytesIO
+from shlex import join
 
 import pytesseract
 import requests
@@ -66,16 +68,20 @@ def ask_ollama(prompt, temperature=0.2, max_tokens=700):
     return answer
 
 
-def healthcare_assistant(question):
-    prompt = f"""
-You are an AI Healthcare Information Assistant.
+def healthcare_assistant(history):
+    if not history:
+         return""
+         lines=[]
+         for m in  history:
+            speaker = "user" if m["role"]=="user"else "assistent"
+            lines.append(f"{speaker}:"{,['content']}")
+            text = "\".join(lines)
+            return text[MAX_HISTORY_CHARS:]
+            Def healthcare_assistant(question, histroy= None):
+            history_text= _format_history(history)
+            history_block =f"\conversation  so far:\n {history_text}\n"history_text else ""
+            PROMPT =f""
 
-User Question:
-{question}
-
-Answer the question clearly and simply.
-
-Rules:
 - Provide general healthcare information.
 - Do not diagnose a confirmed disease.
 - Do not prescribe medicines.
